@@ -62,7 +62,7 @@ BUTTONS: dict[str, tuple[ButtonEntityDescription, ...]] = {
     ),
     # Gate Controller
     # Not documented
-    "q4tn6xb10zncammj": (
+    "qt": (
         ButtonEntityDescription(
             key=DPCode.GATE_OPEN,
             name="Open",
@@ -101,7 +101,8 @@ async def async_setup_entry(
             device = hass_data.manager.device_map[device_id]
             if descriptions := BUTTONS.get(device.category):
                 for description in descriptions:
-                    if description.key in device.status:
+                    # Для устройств категории qt добавляем все кнопки без проверки наличия в status
+                    if device.category == "qt" or description.key in device.status:
                         entities.append(
                             SmartLifeButtonEntity(
                                 device, hass_data.manager, description
@@ -133,4 +134,5 @@ class SmartLifeButtonEntity(SmartLifeEntity, ButtonEntity):
 
     def press(self) -> None:
         """Press the button."""
+        # Для ворот всегда отправляем команду, даже если нет статуса
         self._send_command([{"code": self.entity_description.key, "value": True}])

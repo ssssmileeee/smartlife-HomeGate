@@ -699,7 +699,7 @@ SWITCHES: dict[str, tuple[SwitchEntityDescription, ...]] = {
     ),
     # Gate Controller
     # Not documented
-    "q4tn6xb10zncammj": (
+    "qt": (
         SwitchEntityDescription(
             key=DPCode.GATE_FAST_OPEN,
             name="Fast opening",
@@ -728,7 +728,8 @@ async def async_setup_entry(
             device = hass_data.manager.device_map[device_id]
             if descriptions := SWITCHES.get(device.category):
                 for description in descriptions:
-                    if description.key in device.status:
+                    # Для устройств категории qt добавляем все переключатели без проверки наличия в status
+                    if device.category == "qt" or description.key in device.status:
                         entities.append(
                             SmartLifeSwitchEntity(
                                 device, hass_data.manager, description

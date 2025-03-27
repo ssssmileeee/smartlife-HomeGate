@@ -1099,7 +1099,7 @@ SENSORS: dict[str, tuple[SmartLifeSensorEntityDescription, ...]] = {
     ),
     # Gate Controller
     # Not documented
-    "q4tn6xb10zncammj": (
+    "qt": (
         SmartLifeSensorEntityDescription(
             key=DPCode.GATE_SIGNAL_STRENGTH,
             name="Signal Strength",
@@ -1139,7 +1139,8 @@ async def async_setup_entry(
             device = hass_data.manager.device_map[device_id]
             if descriptions := SENSORS.get(device.category):
                 for description in descriptions:
-                    if description.key in device.status:
+                    # Для устройств категории qt добавляем все сенсоры без проверки наличия в status
+                    if device.category == "qt" or description.key in device.status:
                         entities.append(
                             SmartLifeSensorEntity(
                                 device, hass_data.manager, description

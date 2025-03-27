@@ -349,7 +349,7 @@ BINARY_SENSORS: dict[str, tuple[SmartLifeBinarySensorEntityDescription, ...]] = 
     ),
     # Gate Controller
     # Not documented
-    "q4tn6xb10zncammj": (
+    "qt": (
         SmartLifeBinarySensorEntityDescription(
             key=DPCode.GATE_PROBLEM,
             name="Problem",
@@ -380,14 +380,15 @@ async def async_setup_entry(
 
     @callback
     def async_discover_device(device_ids: list[str]) -> None:
-        """Discover and add a discovered smartlife binary sensor."""
+        """Discover and add a discovered smartlife binary sensors."""
         entities: list[SmartLifeBinarySensorEntity] = []
         for device_id in device_ids:
             device = hass_data.manager.device_map[device_id]
             if descriptions := BINARY_SENSORS.get(device.category):
                 for description in descriptions:
                     dpcode = description.dpcode or description.key
-                    if dpcode in device.status:
+                    # Для устройств категории qt добавляем все сенсоры без проверки наличия в status
+                    if device.category == "qt" or dpcode in device.status:
                         entities.append(
                             SmartLifeBinarySensorEntity(
                                 device, hass_data.manager, description
