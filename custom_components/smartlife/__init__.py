@@ -226,7 +226,19 @@ class DeviceListener(SharingDeviceListener):
         """Add device added listener."""
         # Ensure the device isn't present stale
         self.hass.add_job(self.async_remove_device, device.id)
-
+        
+        # Логируем детальную информацию об устройстве
+        LOGGER.debug(
+            "Adding device %s (category: %s, product_id: %s)",
+            device.id,
+            device.category,
+            device.product_id
+        )
+        LOGGER.debug("Device name: %s", device.name)
+        LOGGER.debug("Device status: %s", device.status)
+        LOGGER.debug("Device function: %s", device.function)
+        LOGGER.debug("Device status_range: %s", device.status_range)
+        
         dispatcher_send(self.hass, SMART_LIFE_DISCOVERY_NEW, [device.id])
 
     def remove_device(self, device_id: str) -> None:
