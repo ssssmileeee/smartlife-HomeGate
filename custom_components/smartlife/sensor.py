@@ -22,6 +22,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTime,
     UnitOfEnergy,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -1095,6 +1096,23 @@ SENSORS: dict[str, tuple[SmartLifeSensorEntityDescription, ...]] = {
             icon="mdi:gesture-tap-button",
         ),
         *BATTERY_SENSORS,
+    ),
+    # Gate Controller
+    # Not documented
+    "q4tn6xb10zncammj": (
+        SmartLifeSensorEntityDescription(
+            key=DPCode.GATE_SIGNAL_STRENGTH,
+            name="Signal Strength",
+            device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+            native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            state_class=SensorStateClass.MEASUREMENT,
+        ),
+        SmartLifeSensorEntityDescription(
+            key=DPCode.GATE_STATE,
+            name="Return State",
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
     ),
 }
 

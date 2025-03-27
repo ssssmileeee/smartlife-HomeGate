@@ -347,6 +347,28 @@ BINARY_SENSORS: dict[str, tuple[SmartLifeBinarySensorEntityDescription, ...]] = 
             on_value="tilt",
         ),
     ),
+    # Gate Controller
+    # Not documented
+    "q4tn6xb10zncammj": (
+        SmartLifeBinarySensorEntityDescription(
+            key=DPCode.GATE_PROBLEM,
+            name="Problem",
+            device_class=BinarySensorDeviceClass.PROBLEM,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+        SmartLifeBinarySensorEntityDescription(
+            key=DPCode.GATE_STATE,
+            name="Gate",
+            device_class=BinarySensorDeviceClass.GARAGE_DOOR,
+            on_value=12,  # Value 12 means the gate is open
+        ),
+        SmartLifeBinarySensorEntityDescription(
+            key=DPCode.GATE_STATE,
+            name="Lock",
+            device_class=BinarySensorDeviceClass.LOCK,
+            on_value=6,   # Value 6 means the gate is locked (invert logic)
+        ),
+    ),
 }
 
 

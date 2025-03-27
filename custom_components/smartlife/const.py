@@ -368,6 +368,20 @@ class DPCode(StrEnum):
     WORK_MODE = "work_mode"  # Working mode
     WORK_POWER = "work_power"
     ADD_ELE = "add_ele"
+    
+    # Gate controller specific codes
+    GATE_OPEN = "101"  # Open gate button
+    GATE_CLOSE = "102"  # Close gate button
+    GATE_STOP = "103"  # Stop gate button
+    GATE_LOCK = "104"  # Lock gate button
+    GATE_STATE = "105"  # Gate state (integer)
+    GATE_STATE_LOCKED = "106"  # Gate lock state
+    GATE_OPEN_LOCKED = "107"  # Gate open locked state
+    GATE_INFRARED = "108"  # Infrared sensor event
+    GATE_PROBLEM = "109"  # Problem sensor
+    GATE_FAST_OPEN = "110"  # Fast opening switch
+    GATE_HIDDEN_STATE = "111"  # Hidden state
+    GATE_SIGNAL_STRENGTH = "112"  # Signal strength
 
 
 @dataclass
