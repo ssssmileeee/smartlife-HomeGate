@@ -60,6 +60,30 @@ BUTTONS: dict[str, tuple[ButtonEntityDescription, ...]] = {
             icon="mdi:sleep",
         ),
     ),
+    # Gate Controller
+    # Not documented
+    "q4tn6xb10zncammj": (
+        ButtonEntityDescription(
+            key=DPCode.GATE_OPEN,
+            name="Open",
+            icon="mdi:gate-open",
+        ),
+        ButtonEntityDescription(
+            key=DPCode.GATE_CLOSE,
+            name="Close",
+            icon="mdi:gate",
+        ),
+        ButtonEntityDescription(
+            key=DPCode.GATE_STOP,
+            name="Stop",
+            icon="mdi:stop",
+        ),
+        ButtonEntityDescription(
+            key=DPCode.GATE_LOCK,
+            name="Lock",
+            icon="mdi:lock",
+        ),
+    ),
 }
 
 

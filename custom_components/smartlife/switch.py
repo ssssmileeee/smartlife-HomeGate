@@ -697,6 +697,16 @@ SWITCHES: dict[str, tuple[SwitchEntityDescription, ...]] = {
             entity_category=EntityCategory.CONFIG,
         ),
     ),
+    # Gate Controller
+    # Not documented
+    "q4tn6xb10zncammj": (
+        SwitchEntityDescription(
+            key=DPCode.GATE_FAST_OPEN,
+            name="Fast opening",
+            icon="mdi:fast-forward",
+            entity_category=EntityCategory.CONFIG,
+        ),
+    ),
 }
 
 # Socket (duplicate of `pc`)
