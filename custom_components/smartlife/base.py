@@ -13,7 +13,7 @@ from typing_extensions import Self
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo, Entity
 
-from .const import DOMAIN, LOGGER, SMART_LIFE_HA_SIGNAL_UPDATE_ENTITY, DPCode, DPType
+from .const import DOMAIN, LOGGER, SMART_LIFE_HA_SIGNAL_UPDATE_ENTITY, DPCode, DPType, debug_dp_code
 from .util import remap_value
 
 
@@ -262,8 +262,34 @@ class SmartLifeEntity(Entity):
 
         return None
 
+    def dump_device_info(self) -> None:
+        """Dump detailed device information to logs for debugging."""
+        LOGGER.debug("=== Device Info for %s ===", self.device.id)
+        LOGGER.debug("Category: %s", self.device.category)
+        LOGGER.debug("Product ID: %s", self.device.product_id)
+        LOGGER.debug("Product Name: %s", self.device.product_name)
+        
+        # Вывод информации о статусе
+        LOGGER.debug("Status: %s", self.device.status)
+        
+        # Вывод информации о функциях
+        LOGGER.debug("Functions:")
+        for key, value in self.device.function.items():
+            LOGGER.debug("  - %s: type=%s, values=%s", key, value.type, value.values)
+        
+        # Вывод информации о диапазонах статусов
+        LOGGER.debug("Status Ranges:")
+        for key, value in self.device.status_range.items():
+            LOGGER.debug("  - %s: type=%s, values=%s", key, value.type, value.values)
+        
+        LOGGER.debug("=== End Device Info ===")
+
     async def async_added_to_hass(self) -> None:
         """Call when entity is added to hass."""
+        # Логируем информацию о свойствах устройства при добавлении
+        if self.device.category == "qt":
+            self.dump_device_info()
+        
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass,
@@ -274,5 +300,129 @@ class SmartLifeEntity(Entity):
 
     def _send_command(self, commands: list[dict[str, Any]]) -> None:
         """Send command to the device."""
-        LOGGER.debug("Sending commands for device %s: %s", self.device.id, commands)
-        self.device_manager.send_commands(self.device.id, commands)
+        LOGGER.debug(
+            "Sending commands for device %s (category: %s, product_id: %s): %s", 
+            self.device.id, 
+            self.device.category,
+            self.device.product_id,
+            commands
+        )
+        
+        # Расширенное логирование типов и значений
+        for cmd in commands:
+            LOGGER.debug(
+                "Command details - code: %s, type: %s, value: %s, value_type: %s",
+                cmd.get("code"),
+                type(cmd.get("code")),
+                cmd.get("value"),
+                type(cmd.get("value"))
+            )
+        
+        # Для ворот пробуем различные форматы команд
+        if self.device.category == "qt":
+            # Преобразование команд для устройств ворот
+            string_commands = []
+            for command in commands:
+                # Преобразуем DPCode в строку если нужно
+                if isinstance(command["code"], DPCode):
+                    command["code"] = command["code"].value
+                
+                # Логирование измененной команды
+                LOGGER.debug(
+                    "Modified command for gate - code: %s, type: %s, value: %s, value_type: %s",
+                    command.get("code"),
+                    type(command.get("code")),
+                    command.get("value"),
+                    type(command.get("value"))
+                )
+                
+                string_commands.append(command)
+            
+            try:
+                self.device_manager.send_commands(self.device.id, string_commands)
+            except Exception as e:
+                LOGGER.error("Error sending command to gate: %s", e)
+                # Попробуем другой формат если первый не сработал
+                try:
+                    # Возможно API ожидает числовые значения для кодов вместо строк
+                    numeric_commands = []
+                    for cmd in string_commands:
+                        if cmd["code"].isdigit():
+                            cmd["code"] = int(cmd["code"])
+                        numeric_commands.append(cmd)
+                    LOGGER.debug("Trying with numeric codes: %s", numeric_commands)
+                    self.device_manager.send_commands(self.device.id, numeric_commands)
+                except Exception as e2:
+                    LOGGER.error("Second attempt also failed: %s", e2)
+        else:
+            self.device_manager.send_commands(self.device.id, commands)
+
+    def _send_gate_command(self, command_code: str, value: int) -> None:
+        """Send a simplified command to gate device.
+        
+        Args:
+            command_code: Command code as string (101, 102, 103, etc.)
+            value: Command value as integer (typically 1 for ON, 0 for OFF)
+        """
+        if self.device.category != "qt":
+            LOGGER.error("_send_gate_command called for non-gate device")
+            return
+        
+        # Возможные форматы для командных кодов
+        possible_commands = []
+        
+        # 1. Числовые значения (строковые)
+        possible_commands.append({"code": command_code, "value": value})
+        
+        # 2. Числовые значения (целые числа)
+        if command_code.isdigit():
+            possible_commands.append({"code": int(command_code), "value": value})
+        
+        # 3. Преобразование в snake_case в зависимости от кода
+        snake_case_code = None
+        if command_code == "101":
+            snake_case_code = "gate_open"
+        elif command_code == "102":
+            snake_case_code = "gate_close"
+        elif command_code == "103":
+            snake_case_code = "gate_stop"
+        elif command_code == "104":
+            snake_case_code = "gate_lock"
+        elif command_code == "110":
+            snake_case_code = "gate_fast_open"
+        
+        if snake_case_code:
+            possible_commands.append({"code": snake_case_code, "value": value})
+            
+            # Также пробуем другие варианты snake_case
+            if command_code == "101":
+                possible_commands.append({"code": "open", "value": value})
+                possible_commands.append({"code": "open_gate", "value": value})
+            elif command_code == "102":
+                possible_commands.append({"code": "close", "value": value})
+                possible_commands.append({"code": "close_gate", "value": value})
+            elif command_code == "103":
+                possible_commands.append({"code": "stop", "value": value})
+            elif command_code == "104":
+                possible_commands.append({"code": "lock", "value": value})
+            elif command_code == "110":
+                possible_commands.append({"code": "fast_open", "value": value})
+                possible_commands.append({"code": "fast_opening", "value": value})
+        
+        # Перебираем все возможные форматы команд
+        last_error = None
+        LOGGER.debug("Trying all possible command formats for gate command %s, value=%s", command_code, value)
+        for cmd in possible_commands:
+            try:
+                LOGGER.debug("Sending gate command: %s", cmd)
+                self.device_manager.send_commands(self.device.id, [cmd])
+                LOGGER.debug("Command successful: %s", cmd)
+                return
+            except Exception as e:
+                last_error = e
+                LOGGER.debug("Command failed: %s with error: %s", cmd, e)
+        
+        # Если все команды не сработали, выбрасываем последнюю ошибку
+        if last_error:
+            LOGGER.error("All command formats failed for gate %s. Last error: %s", command_code, last_error)
+            raise last_error

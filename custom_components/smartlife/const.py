@@ -585,4 +585,14 @@ for uom in UNITS:
             DEVICE_CLASS_UNITS[device_class][unit_alias] = uom
 
 
+def debug_dp_code(dpcode: DPCode) -> str:
+    """Return a debug string for a DPCode."""
+    try:
+        if isinstance(dpcode, DPCode):
+            return f"DPCode.{dpcode.name} (value={dpcode.value})"
+        return f"Unknown type: {type(dpcode)}, value: {dpcode}"
+    except Exception as e:
+        return f"Error parsing DPCode: {e}"
+
+
 
