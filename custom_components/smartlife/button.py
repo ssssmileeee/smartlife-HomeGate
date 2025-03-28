@@ -132,20 +132,13 @@ class SmartLifeButtonEntity(SmartLifeEntity, ButtonEntity):
         self.entity_description = description
         self._attr_unique_id = f"{super().unique_id}{description.key}"
         
-        # Для отладки логируем все доступные данные устройства
+        # Минимальное логирование для отладки
         if self.device.category == "qt":
             LOGGER.debug(
-                "Initializing gate button: %s (key=%s) with device status: %s",
+                "Initializing gate button: %s (key=%s)",
                 description.name,
                 description.key,
-                self.device.status
             )
-            # Логируем debug_dp_code для каждого кода
-            LOGGER.debug("DPCode debug info: %s", debug_dp_code(description.key))
-            
-            # Для ворот расширенное логирование
-            from .const import log_device_info
-            log_device_info(self.device, LOGGER)
     
     def press(self) -> None:
         """Press the button."""

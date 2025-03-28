@@ -418,16 +418,13 @@ class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{super().unique_id}{description.key}"
 
-        # Для отладки логируем все доступные данные устройства
+        # Минимальное логирование для ворот
         if self.device.category == "qt":
             LOGGER.debug(
-                "Initializing gate binary sensor: %s (key=%s) with device status: %s",
+                "Initializing gate binary sensor: %s (key=%s)",
                 description.name,
                 description.key,
-                self.device.status
             )
-            # Логируем debug_dp_code для каждого кода
-            LOGGER.debug("DPCode debug info: %s", debug_dp_code(description.key))
 
     @property
     def is_on(self) -> bool | None:
@@ -435,15 +432,5 @@ class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
         value = self.device.status.get(self.entity_description.key)
         if value is None:
             return None
-
-        # For gate controller status, log the status to help with debugging
-        if self.device.category == "qt":
-            LOGGER.debug(
-                "Gate binary sensor update for %s (key=%s): value=%s, type=%s", 
-                self.entity_description.name, 
-                self.entity_description.key, 
-                value, 
-                type(value)
-            )
 
         return value == self.entity_description.on_value

@@ -285,15 +285,10 @@ class TokenListener(SharingTokenListener):
             device_ids,
         )
 
-        # Логируем информацию о каждом устройстве, особенно для ворот
+        # Логируем минимальную информацию о каждом устройстве
         for device_id in device_ids:
             device = self._manager.device_map.get(device_id)
             if device:
-                if device.category == "qt":
-                    LOGGER.debug("Found gate controller device: %s", device.name)
-                    from .const import log_device_info
-                    log_device_info(device, LOGGER)
-                else:
-                    LOGGER.debug("Found device: %s, category: %s", device.name, device.category)
+                LOGGER.debug("Found device: %s, category: %s", device.name, device.category)
 
         hass = self._hass
