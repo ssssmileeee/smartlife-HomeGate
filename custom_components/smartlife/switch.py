@@ -18,7 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
-from .const import DOMAIN, LOGGER, SMART_LIFE_DISCOVERY_NEW, DPCode, debug_dp_code
+from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode
 
 # All descriptions can be found here. Mostly the Boolean data types in the
 # default instruction set of each category end up being a Switch.
@@ -727,9 +727,8 @@ async def async_setup_entry(
         for device_id in device_ids:
             device = hass_data.manager.device_map[device_id]
             if descriptions := SWITCHES.get(device.category):
-                for description in descriptions:
-                    # Для устройств категории qt добавляем все переключатели без проверки наличия в status
-                    if device.category == "qt" or description.key in device.status:
+                for description in descriptions:                    
+                    if description.key in device.status:
                         entities.append(
                             SmartLifeSwitchEntity(
                                 device, hass_data.manager, description
@@ -768,12 +767,8 @@ class SmartLifeSwitchEntity(SmartLifeEntity, SwitchEntity):
         """Turn the switch on."""
         # Специальный обработчик для ворот
         if self.device.category == "qt" and self.entity_description.key == DPCode.GATE_FAST_OPEN:
-            LOGGER.debug("Switch ON: %s (key=%s)", self.entity_description.name, self.entity_description.key)
-            LOGGER.debug("DPCode debug info: %s", debug_dp_code(self.entity_description.key))
-            
             # Используем команду из логов
             command = "快捷开门"  # Быстрое открытие
-            LOGGER.debug("Sending gate fast open command: %s", command)
             self._send_command([{"code": command}])
         else:
             # Для обычных переключателей используем стандартный формат
@@ -783,12 +778,8 @@ class SmartLifeSwitchEntity(SmartLifeEntity, SwitchEntity):
         """Turn the switch off."""
         # Специальный обработчик для ворот
         if self.device.category == "qt" and self.entity_description.key == DPCode.GATE_FAST_OPEN:
-            LOGGER.debug("Switch OFF: %s (key=%s)", self.entity_description.name, self.entity_description.key)
-            LOGGER.debug("DPCode debug info: %s", debug_dp_code(self.entity_description.key))
-            
             # Отключаем быстрое открытие - это логически должно быть так же
             command = "快捷开门"  # Быстрое открытие, отправляем false
-            LOGGER.debug("Sending gate fast open OFF command: %s, value=false", command)
             self._send_command([{"code": command, "value": False}])
         else:
             # Для обычных переключателей используем стандартный формат

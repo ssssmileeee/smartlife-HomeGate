@@ -22,9 +22,7 @@ from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfPower,
-    UnitOfPressure,
     UnitOfTemperature,
-    UnitOfVolume,
 )
 
 DOMAIN = "smartlife"
@@ -573,54 +571,13 @@ UNITS = (
     ),
 )
 
-
+# Device class unit mappings
 DEVICE_CLASS_UNITS: dict[str, dict[str, UnitOfMeasurement]] = {}
 for uom in UNITS:
     for device_class in uom.device_classes:
         DEVICE_CLASS_UNITS.setdefault(device_class, {})[uom.unit] = uom
         for unit_alias in uom.aliases:
             DEVICE_CLASS_UNITS[device_class][unit_alias] = uom
-
-
-def debug_dp_code(dp_code: DPCode) -> str:
-    """Return debug information for a DPCode."""
-    if not dp_code:
-        return f"None (type: {type(dp_code)})"
-    
-    try:
-        if hasattr(dp_code, "value"):
-            return f"{dp_code} (value: {dp_code.value}, type: {type(dp_code)}, value_type: {type(dp_code.value)})"
-        return f"{dp_code} (type: {type(dp_code)})"
-    except Exception as e:
-        return f"Error getting debug info for {dp_code}: {e}"
-
-def log_device_info(device: object, logger: object) -> None:
-    """Расширенное логирование информации об устройстве."""
-    logger.debug("======= DEVICE INFO =======")
-    logger.debug("Device ID: %s", getattr(device, "id", "unknown"))
-    logger.debug("Device name: %s", getattr(device, "name", "unknown"))
-    logger.debug("Device category: %s", getattr(device, "category", "unknown"))
-    logger.debug("Device product_id: %s", getattr(device, "product_id", "unknown"))
-    logger.debug("Device model: %s", getattr(device, "model", "unknown"))
-    logger.debug("Device online: %s", getattr(device, "online", "unknown"))
-    
-    # Логируем все доступные статусы устройства
-    if hasattr(device, "status") and device.status:
-        logger.debug("Device status:")
-        for key, value in device.status.items():
-            logger.debug("  %s: %s (type: %s)", key, value, type(value))
-
-    # Логируем все доступные функции устройства
-    if hasattr(device, "function") and device.function:
-        logger.debug("Device functions:")
-        for func in device.function:
-            if hasattr(func, "code") and hasattr(func, "type"):
-                logger.debug("  Function code: %s, type: %s", func.code, func.type)
-                # Если есть additional values, логируем и их
-                if hasattr(func, "values") and func.values:
-                    logger.debug("    Values: %s", func.values)
-    
-    logger.debug("============================")
 
 
 

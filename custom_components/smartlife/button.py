@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
-from .const import DOMAIN, LOGGER, SMART_LIFE_DISCOVERY_NEW, DPCode, debug_dp_code
+from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode
 
 # All descriptions can be found here.
 # https://developer.tuya.com/en/docs/iot/standarddescription?id=K9i5ql6waswzq
@@ -101,8 +101,7 @@ async def async_setup_entry(
             device = hass_data.manager.device_map[device_id]
             if descriptions := BUTTONS.get(device.category):
                 for description in descriptions:
-                    # Для устройств категории qt добавляем все кнопки без проверки наличия в status
-                    if device.category == "qt" or description.key in device.status:
+                    if description.key in device.status:
                         entities.append(
                             SmartLifeButtonEntity(
                                 device, hass_data.manager, description
@@ -130,22 +129,7 @@ class SmartLifeButtonEntity(SmartLifeEntity, ButtonEntity):
         """Init smartlife button."""
         super().__init__(device, device_manager)
         self.entity_description = description
-        self._attr_unique_id = f"{super().unique_id}{description.key}"
-        
-        # Для отладки логируем все доступные данные устройства
-        if self.device.category == "qt":
-            LOGGER.debug(
-                "Initializing gate button: %s (key=%s) with device status: %s",
-                description.name,
-                description.key,
-                self.device.status
-            )
-            # Логируем debug_dp_code для каждого кода
-            LOGGER.debug("DPCode debug info: %s", debug_dp_code(description.key))
-            
-            # Для ворот расширенное логирование
-            from .const import log_device_info
-            log_device_info(self.device, LOGGER)
+        self._attr_unique_id = f"{super().unique_id}{description.key}"        
     
     def press(self) -> None:
         """Press the button."""

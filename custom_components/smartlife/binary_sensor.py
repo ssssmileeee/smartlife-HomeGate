@@ -18,12 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
-from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode, debug_dp_code
-
-import logging
-
-LOGGER = logging.getLogger(__name__)
-
+from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode
 
 @dataclass
 class SmartLifeBinarySensorEntityDescription(BinarySensorEntityDescription):
@@ -387,8 +382,7 @@ async def async_setup_entry(
             if descriptions := BINARY_SENSORS.get(device.category):
                 for description in descriptions:
                     dpcode = description.dpcode or description.key
-                    # Для устройств категории qt добавляем все сенсоры без проверки наличия в status
-                    if device.category == "qt" or dpcode in device.status:
+                    if dpcode in device.status:
                         entities.append(
                             SmartLifeBinarySensorEntity(
                                 device, hass_data.manager, description
@@ -418,32 +412,12 @@ class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{super().unique_id}{description.key}"
 
-        # Для отладки логируем все доступные данные устройства
-        if self.device.category == "qt":
-            LOGGER.debug(
-                "Initializing gate binary sensor: %s (key=%s) with device status: %s",
-                description.name,
-                description.key,
-                self.device.status
-            )
-            # Логируем debug_dp_code для каждого кода
-            LOGGER.debug("DPCode debug info: %s", debug_dp_code(description.key))
-
-    @property
-    def is_on(self) -> bool | None:
-        """Return true if the binary sensor is on."""
-        value = self.device.status.get(self.entity_description.key)
-        if value is None:
-            return None
-
-        # For gate controller status, log the status to help with debugging
-        if self.device.category == "qt":
-            LOGGER.debug(
-                "Gate binary sensor update for %s (key=%s): value=%s, type=%s", 
-                self.entity_description.name, 
-                self.entity_description.key, 
-                value, 
-                type(value)
-            )
-
-        return value == self.entity_description.on_value
+    @@property
+    def is_on(self) -> bool:
+        """Return true if sensor is on."""
+        dpcode = self.entity_description.dpcode or self.entity_description.key
+        if dpcode not in self.device.status:
+            return False
+        if isinstance(self.entity_description.on_value, set):
+            return self.device.status[dpcode] in self.entity_description.on_value
+        return self.device.status[dpcode] == self.entity_description.on_value
