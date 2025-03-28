@@ -771,44 +771,10 @@ class SmartLifeSwitchEntity(SmartLifeEntity, SwitchEntity):
             LOGGER.debug("Switch ON: %s (key=%s)", self.entity_description.name, self.entity_description.key)
             LOGGER.debug("DPCode debug info: %s", debug_dp_code(self.entity_description.key))
             
-            # Пробуем разные варианты команд
-            try_values = [
-                {"code": "110", "value": True},
-                {"code": "110", "value": 1},
-                {"code": "110", "value": "1"},
-                {"code": 110, "value": True},
-                {"code": 110, "value": 1},
-                {"code": 110, "value": "1"},
-                {"code": "fast_open", "value": True},
-                {"code": "fast_opening", "value": True},
-                {"code": "gate_fast_open", "value": True},
-                {"code": "gate_fast_opening", "value": True},
-            ]
-            
-            # Сначала пробуем специальный метод
-            try:
-                LOGGER.debug("Trying to send command with _send_gate_command: 110, value=1")
-                self._send_gate_command("110", 1)
-                return
-            except Exception as e:
-                LOGGER.error("Gate fast open command failed with _send_gate_command: %s", e)
-            
-            # Если специальный метод не сработал, пробуем все варианты по очереди
-            last_error = None
-            for cmd in try_values:
-                try:
-                    LOGGER.debug("Trying gate fast open command with format: %s", cmd)
-                    self._send_command([cmd])
-                    # Если команда прошла успешно, выходим из цикла
-                    LOGGER.debug("Gate fast open command successful with format: %s", cmd)
-                    return
-                except Exception as e:
-                    last_error = e
-                    LOGGER.debug("Gate fast open command failed with format %s: %s", cmd, e)
-            
-            # Если все попытки не удались, логируем ошибку
-            if last_error:
-                LOGGER.error("All gate fast open command formats failed. Last error: %s", last_error)
+            # Используем команду из логов
+            command = "快捷开门"  # Быстрое открытие
+            LOGGER.debug("Sending gate fast open command: %s", command)
+            self._send_command([{"code": command}])
         else:
             # Для обычных переключателей используем стандартный формат
             self._send_command([{"code": self.entity_description.key, "value": True}])
@@ -820,44 +786,10 @@ class SmartLifeSwitchEntity(SmartLifeEntity, SwitchEntity):
             LOGGER.debug("Switch OFF: %s (key=%s)", self.entity_description.name, self.entity_description.key)
             LOGGER.debug("DPCode debug info: %s", debug_dp_code(self.entity_description.key))
             
-            # Пробуем разные варианты команд
-            try_values = [
-                {"code": "110", "value": False},
-                {"code": "110", "value": 0},
-                {"code": "110", "value": "0"},
-                {"code": 110, "value": False},
-                {"code": 110, "value": 0},
-                {"code": 110, "value": "0"},
-                {"code": "fast_open", "value": False},
-                {"code": "fast_opening", "value": False},
-                {"code": "gate_fast_open", "value": False},
-                {"code": "gate_fast_opening", "value": False},
-            ]
-            
-            # Сначала пробуем специальный метод
-            try:
-                LOGGER.debug("Trying to send command with _send_gate_command: 110, value=0")
-                self._send_gate_command("110", 0)
-                return
-            except Exception as e:
-                LOGGER.error("Gate fast open OFF command failed with _send_gate_command: %s", e)
-            
-            # Если специальный метод не сработал, пробуем все варианты по очереди
-            last_error = None
-            for cmd in try_values:
-                try:
-                    LOGGER.debug("Trying gate fast open OFF command with format: %s", cmd)
-                    self._send_command([cmd])
-                    # Если команда прошла успешно, выходим из цикла
-                    LOGGER.debug("Gate fast open OFF command successful with format: %s", cmd)
-                    return
-                except Exception as e:
-                    last_error = e
-                    LOGGER.debug("Gate fast open OFF command failed with format %s: %s", cmd, e)
-            
-            # Если все попытки не удались, логируем ошибку
-            if last_error:
-                LOGGER.error("All gate fast open OFF command formats failed. Last error: %s", last_error)
+            # Отключаем быстрое открытие - это логически должно быть так же
+            command = "快捷开门"  # Быстрое открытие, отправляем false
+            LOGGER.debug("Sending gate fast open OFF command: %s, value=false", command)
+            self._send_command([{"code": command, "value": False}])
         else:
             # Для обычных переключателей используем стандартный формат
             self._send_command([{"code": self.entity_description.key, "value": False}])

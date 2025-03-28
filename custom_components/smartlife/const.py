@@ -370,18 +370,15 @@ class DPCode(StrEnum):
     ADD_ELE = "add_ele"
     
     # Gate controller specific codes
-    GATE_OPEN = "101"  # Open gate button
-    GATE_CLOSE = "102"  # Close gate button
-    GATE_STOP = "103"  # Stop gate button
-    GATE_LOCK = "104"  # Lock gate button
-    GATE_STATE = "105"  # Gate state (integer)
-    GATE_STATE_LOCKED = "106"  # Gate lock state
-    GATE_OPEN_LOCKED = "107"  # Gate open locked state
-    GATE_INFRARED = "108"  # Infrared sensor event
-    GATE_PROBLEM = "109"  # Problem sensor
-    GATE_FAST_OPEN = "110"  # Fast opening switch
-    GATE_HIDDEN_STATE = "111"  # Hidden state
-    GATE_SIGNAL_STRENGTH = "112"  # Signal strength
+    GATE_OPEN = "open"  # Open gate button (from logs)
+    GATE_CLOSE = "close"  # Close gate button (from logs)
+    GATE_STOP = "stop"  # Stop gate button
+    GATE_LOCK = "lock"  # Lock gate button
+    GATE_STATE = "状态返回"  # Gate state (from logs, Chinese: "status return")
+    GATE_CLOSE_PROCESS = "关行程"  # Gate close process (from logs, Chinese: "close process")
+    GATE_OPEN_PROCESS = "开行程"  # Gate open process (from logs, Chinese: "open process")
+    GATE_FAST_OPEN = "快捷开门"  # Fast opening switch (from logs, Chinese: "quick open door")
+    GATE_SIGNAL_STRENGTH = "信号强度显示"  # Signal strength (from logs, Chinese: "signal strength display")
 
 
 @dataclass
@@ -585,14 +582,45 @@ for uom in UNITS:
             DEVICE_CLASS_UNITS[device_class][unit_alias] = uom
 
 
-def debug_dp_code(dpcode: DPCode) -> str:
-    """Return a debug string for a DPCode."""
+def debug_dp_code(dp_code: DPCode) -> str:
+    """Return debug information for a DPCode."""
+    if not dp_code:
+        return f"None (type: {type(dp_code)})"
+    
     try:
-        if isinstance(dpcode, DPCode):
-            return f"DPCode.{dpcode.name} (value={dpcode.value})"
-        return f"Unknown type: {type(dpcode)}, value: {dpcode}"
+        if hasattr(dp_code, "value"):
+            return f"{dp_code} (value: {dp_code.value}, type: {type(dp_code)}, value_type: {type(dp_code.value)})"
+        return f"{dp_code} (type: {type(dp_code)})"
     except Exception as e:
-        return f"Error parsing DPCode: {e}"
+        return f"Error getting debug info for {dp_code}: {e}"
+
+def log_device_info(device: object, logger: object) -> None:
+    """Расширенное логирование информации об устройстве."""
+    logger.debug("======= DEVICE INFO =======")
+    logger.debug("Device ID: %s", getattr(device, "id", "unknown"))
+    logger.debug("Device name: %s", getattr(device, "name", "unknown"))
+    logger.debug("Device category: %s", getattr(device, "category", "unknown"))
+    logger.debug("Device product_id: %s", getattr(device, "product_id", "unknown"))
+    logger.debug("Device model: %s", getattr(device, "model", "unknown"))
+    logger.debug("Device online: %s", getattr(device, "online", "unknown"))
+    
+    # Логируем все доступные статусы устройства
+    if hasattr(device, "status") and device.status:
+        logger.debug("Device status:")
+        for key, value in device.status.items():
+            logger.debug("  %s: %s (type: %s)", key, value, type(value))
+
+    # Логируем все доступные функции устройства
+    if hasattr(device, "function") and device.function:
+        logger.debug("Device functions:")
+        for func in device.function:
+            if hasattr(func, "code") and hasattr(func, "type"):
+                logger.debug("  Function code: %s, type: %s", func.code, func.type)
+                # Если есть additional values, логируем и их
+                if hasattr(func, "values") and func.values:
+                    logger.debug("    Values: %s", func.values)
+    
+    logger.debug("============================")
 
 
 

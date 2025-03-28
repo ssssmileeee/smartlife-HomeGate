@@ -271,3 +271,29 @@ class TokenListener(SharingTokenListener):
         data = {**self.entry.data, "token_info": token_info}
         LOGGER.debug("update token info : %s", data)
         self.hass.config_entries.async_update_entry(self.entry, data=data)
+
+    async def async_forward_entry_setup(
+        self, device_ids: list[str], raw: bool = False
+    ) -> None:
+        """Forward the config entry setup to platforms."""
+        if not device_ids:
+            return
+
+        LOGGER.debug(
+            "Forward entry setup for %s: %s",
+            len(device_ids),
+            device_ids,
+        )
+
+        # Логируем информацию о каждом устройстве, особенно для ворот
+        for device_id in device_ids:
+            device = self._manager.device_map.get(device_id)
+            if device:
+                if device.category == "qt":
+                    LOGGER.debug("Found gate controller device: %s", device.name)
+                    from .const import log_device_info
+                    log_device_info(device, LOGGER)
+                else:
+                    LOGGER.debug("Found device: %s, category: %s", device.name, device.category)
+
+        hass = self._hass
