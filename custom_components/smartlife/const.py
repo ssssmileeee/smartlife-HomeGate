@@ -22,7 +22,9 @@ from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfPower,
+    UnitOfPressure,
     UnitOfTemperature,
+    UnitOfVolume,
 )
 
 DOMAIN = "smartlife"

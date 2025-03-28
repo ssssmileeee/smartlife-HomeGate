@@ -727,7 +727,7 @@ async def async_setup_entry(
         for device_id in device_ids:
             device = hass_data.manager.device_map[device_id]
             if descriptions := SWITCHES.get(device.category):
-                for description in descriptions:                    
+                for description in descriptions:
                     if description.key in device.status:
                         entities.append(
                             SmartLifeSwitchEntity(
