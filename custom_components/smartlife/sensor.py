@@ -34,7 +34,6 @@ from .base import ElectricityTypeData, EnumTypeData, IntegerTypeData, SmartLifeE
 from .const import (
     DEVICE_CLASS_UNITS,
     DOMAIN,
-    LOGGER,
     SMART_LIFE_DISCOVERY_NEW,
     DPCode,
     DPType,
@@ -1179,13 +1178,6 @@ class SmartLifeSensorEntity(SmartLifeEntity, SensorEntity):
         self._attr_unique_id = (
             f"{super().unique_id}{description.key}{description.subkey or ''}"
         )
-        # Минимальное логирование для ворот
-        if self.device.category == "qt":
-            LOGGER.debug(
-                "Initializing gate sensor: %s (key=%s)",
-                description.name,
-                description.key,
-            )
 
         if int_type := self.find_dpcode(description.key, dptype=DPType.INTEGER):
             self._type_data = int_type
@@ -1238,10 +1230,48 @@ class SmartLifeSensorEntity(SmartLifeEntity, SensorEntity):
 
     @property
     def native_value(self) -> StateType:
-        """Return the state of the sensor."""
+        """Return the value reported by the sensor."""
+        # Only continue if data type is known
+        if self._type not in (
+            DPType.INTEGER,
+            DPType.STRING,
+            DPType.ENUM,
+            DPType.JSON,
+            DPType.RAW,
+        ):
+            return None
+
         # Raw value
         value = self.device.status.get(self.entity_description.key)
         if value is None:
             return None
 
-        return self.entity_description.native_value(value)
+        # Scale integer/float value
+        if isinstance(self._type_data, IntegerTypeData):
+            scaled_value = self._type_data.scale_value(value)
+            if self._uom and self._uom.conversion_fn is not None:
+                return self._uom.conversion_fn(scaled_value)
+            return scaled_value
+
+        # Unexpected enum value
+        if (
+            isinstance(self._type_data, EnumTypeData)
+            and value not in self._type_data.range
+        ):
+            return None
+
+        # Get subkey value from Json string.
+        if self._type is DPType.JSON:
+            if self.entity_description.subkey is None:
+                return None
+            values = ElectricityTypeData.from_json(value)
+            return getattr(values, self.entity_description.subkey)
+
+        if self._type is DPType.RAW:
+            if self.entity_description.subkey is None:
+                return None
+            values = ElectricityTypeData.from_raw(value)
+            return getattr(values, self.entity_description.subkey)
+
+        # Valid string or enum value
+        return value

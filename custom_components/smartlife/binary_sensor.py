@@ -401,6 +401,8 @@ async def async_setup_entry(
 class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
     """Smart Life Binary Sensor Entity."""
 
+    entity_description: SmartLifeBinarySensorEntityDescription
+    
     def __init__(
         self,
         device: CustomerDevice,
@@ -412,7 +414,7 @@ class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{super().unique_id}{description.key}"
 
-    @@property
+    @property
     def is_on(self) -> bool:
         """Return true if sensor is on."""
         dpcode = self.entity_description.dpcode or self.entity_description.key
