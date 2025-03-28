@@ -264,34 +264,8 @@ class SmartLifeEntity(Entity):
 
         return None
 
-    def dump_device_info(self) -> None:
-        """Dump detailed device information to logs for debugging."""
-        LOGGER.debug("=== Device Info for %s ===", self.device.id)
-        LOGGER.debug("Category: %s", self.device.category)
-        LOGGER.debug("Product ID: %s", self.device.product_id)
-        LOGGER.debug("Product Name: %s", self.device.product_name)
-        
-        # Вывод информации о статусе
-        LOGGER.debug("Status: %s", self.device.status)
-        
-        # Вывод информации о функциях
-        LOGGER.debug("Functions:")
-        for key, value in self.device.function.items():
-            LOGGER.debug("  - %s: type=%s, values=%s", key, value.type, value.values)
-        
-        # Вывод информации о диапазонах статусов
-        LOGGER.debug("Status Ranges:")
-        for key, value in self.device.status_range.items():
-            LOGGER.debug("  - %s: type=%s, values=%s", key, value.type, value.values)
-        
-        LOGGER.debug("=== End Device Info ===")
-
     async def async_added_to_hass(self) -> None:
         """Call when entity is added to hass."""
-        # Логируем информацию о свойствах устройства при добавлении
-        if self.device.category == "qt":
-            self.dump_device_info()
-        
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass,
