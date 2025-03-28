@@ -357,13 +357,15 @@ BINARY_SENSORS: dict[str, tuple[SmartLifeBinarySensorEntityDescription, ...]] = 
         SmartLifeBinarySensorEntityDescription(
             key=DPCode.GATE_OPEN_PROCESS,
             name="Gate Opening",
-            device_class=BinarySensorDeviceClass.OPENING,
+            icon="mdi:gate-open",
+            device_class=BinarySensorDeviceClass.MOTION,
             on_value="on",  # Value "on" means the gate is opening
         ),
         SmartLifeBinarySensorEntityDescription(
             key=DPCode.GATE_CLOSE_PROCESS, 
             name="Gate Closing",
-            device_class=BinarySensorDeviceClass.CLOSING,
+            icon="mdi:gate",
+            device_class=BinarySensorDeviceClass.MOTION,
             on_value="on",  # Value "on" means the gate is closing
         ),
     ),
