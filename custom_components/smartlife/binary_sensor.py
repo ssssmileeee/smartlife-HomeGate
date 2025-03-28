@@ -18,7 +18,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
-from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode
+from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode, debug_dp_code
+
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -351,22 +355,16 @@ BINARY_SENSORS: dict[str, tuple[SmartLifeBinarySensorEntityDescription, ...]] = 
     # Not documented
     "qt": (
         SmartLifeBinarySensorEntityDescription(
-            key=DPCode.GATE_PROBLEM,
-            name="Problem",
-            device_class=BinarySensorDeviceClass.PROBLEM,
-            entity_category=EntityCategory.DIAGNOSTIC,
+            key=DPCode.GATE_OPEN_PROCESS,
+            name="Gate Opening",
+            device_class=BinarySensorDeviceClass.OPENING,
+            on_value="on",  # Value "on" means the gate is opening
         ),
         SmartLifeBinarySensorEntityDescription(
-            key=DPCode.GATE_STATE,
-            name="Gate",
-            device_class=BinarySensorDeviceClass.GARAGE_DOOR,
-            on_value=12,  # Value 12 means the gate is open
-        ),
-        SmartLifeBinarySensorEntityDescription(
-            key=DPCode.GATE_STATE,
-            name="Lock",
-            device_class=BinarySensorDeviceClass.LOCK,
-            on_value=6,   # Value 6 means the gate is locked (invert logic)
+            key=DPCode.GATE_CLOSE_PROCESS, 
+            name="Gate Closing",
+            device_class=BinarySensorDeviceClass.CLOSING,
+            on_value="on",  # Value "on" means the gate is closing
         ),
     ),
 }
@@ -405,9 +403,7 @@ async def async_setup_entry(
 
 
 class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
-    """smartlife Binary Sensor Entity."""
-
-    entity_description: SmartLifeBinarySensorEntityDescription
+    """Smart Life Binary Sensor Entity."""
 
     def __init__(
         self,
@@ -415,19 +411,37 @@ class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
         device_manager: Manager,
         description: SmartLifeBinarySensorEntityDescription,
     ) -> None:
-        """Init smartlife binary sensor."""
+        """Init SmartLifeBinarySensorEntity."""
         super().__init__(device, device_manager)
         self.entity_description = description
         self._attr_unique_id = f"{super().unique_id}{description.key}"
 
+        # Для отладки логируем все доступные данные устройства
+        if self.device.category == "qt":
+            LOGGER.debug(
+                "Initializing gate binary sensor: %s (key=%s) with device status: %s",
+                description.name,
+                description.key,
+                self.device.status
+            )
+            # Логируем debug_dp_code для каждого кода
+            LOGGER.debug("DPCode debug info: %s", debug_dp_code(description.key))
+
     @property
-    def is_on(self) -> bool:
-        """Return true if sensor is on."""
-        dpcode = self.entity_description.dpcode or self.entity_description.key
-        if dpcode not in self.device.status:
-            return False
+    def is_on(self) -> bool | None:
+        """Return true if the binary sensor is on."""
+        value = self.device.status.get(self.entity_description.key)
+        if value is None:
+            return None
 
-        if isinstance(self.entity_description.on_value, set):
-            return self.device.status[dpcode] in self.entity_description.on_value
+        # For gate controller status, log the status to help with debugging
+        if self.device.category == "qt":
+            LOGGER.debug(
+                "Gate binary sensor update for %s (key=%s): value=%s, type=%s", 
+                self.entity_description.name, 
+                self.entity_description.key, 
+                value, 
+                type(value)
+            )
 
-        return self.device.status[dpcode] == self.entity_description.on_value
+        return value == self.entity_description.on_value

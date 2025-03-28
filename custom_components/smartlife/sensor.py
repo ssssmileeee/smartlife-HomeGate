@@ -23,6 +23,11 @@ from homeassistant.const import (
     UnitOfTime,
     UnitOfEnergy,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    TEMP_CELSIUS,
+    TEMP_FAHRENHEIT,
+    UnitOfLength,
+    UnitOfPressure,
+    UnitOfVolume,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -34,10 +39,12 @@ from .base import ElectricityTypeData, EnumTypeData, IntegerTypeData, SmartLifeE
 from .const import (
     DEVICE_CLASS_UNITS,
     DOMAIN,
+    LOGGER,
     SMART_LIFE_DISCOVERY_NEW,
     DPCode,
     DPType,
     UnitOfMeasurement,
+    debug_dp_code,
 )
 
 
@@ -1110,7 +1117,7 @@ SENSORS: dict[str, tuple[SmartLifeSensorEntityDescription, ...]] = {
         ),
         SmartLifeSensorEntityDescription(
             key=DPCode.GATE_STATE,
-            name="Return State",
+            name="Gate State",
             entity_category=EntityCategory.DIAGNOSTIC,
         ),
     ),
@@ -1178,6 +1185,16 @@ class SmartLifeSensorEntity(SmartLifeEntity, SensorEntity):
         self._attr_unique_id = (
             f"{super().unique_id}{description.key}{description.subkey or ''}"
         )
+        # Для отладки логируем все доступные данные устройства
+        if self.device.category == "qt":
+            LOGGER.debug(
+                "Initializing gate sensor: %s (key=%s) with device status: %s",
+                description.name,
+                description.key,
+                self.device.status
+            )
+            # Логируем debug_dp_code для каждого кода
+            LOGGER.debug("DPCode debug info: %s", debug_dp_code(description.key))
 
         if int_type := self.find_dpcode(description.key, dptype=DPType.INTEGER):
             self._type_data = int_type
@@ -1230,48 +1247,20 @@ class SmartLifeSensorEntity(SmartLifeEntity, SensorEntity):
 
     @property
     def native_value(self) -> StateType:
-        """Return the value reported by the sensor."""
-        # Only continue if data type is known
-        if self._type not in (
-            DPType.INTEGER,
-            DPType.STRING,
-            DPType.ENUM,
-            DPType.JSON,
-            DPType.RAW,
-        ):
-            return None
-
+        """Return the state of the sensor."""
         # Raw value
         value = self.device.status.get(self.entity_description.key)
         if value is None:
             return None
 
-        # Scale integer/float value
-        if isinstance(self._type_data, IntegerTypeData):
-            scaled_value = self._type_data.scale_value(value)
-            if self._uom and self._uom.conversion_fn is not None:
-                return self._uom.conversion_fn(scaled_value)
-            return scaled_value
+        # For gate controller status, log the status to help with debugging
+        if self.device.category == "qt":
+            LOGGER.debug(
+                "Gate sensor update for %s (key=%s): value=%s, type=%s", 
+                self.entity_description.name, 
+                self.entity_description.key, 
+                value, 
+                type(value)
+            )
 
-        # Unexpected enum value
-        if (
-            isinstance(self._type_data, EnumTypeData)
-            and value not in self._type_data.range
-        ):
-            return None
-
-        # Get subkey value from Json string.
-        if self._type is DPType.JSON:
-            if self.entity_description.subkey is None:
-                return None
-            values = ElectricityTypeData.from_json(value)
-            return getattr(values, self.entity_description.subkey)
-
-        if self._type is DPType.RAW:
-            if self.entity_description.subkey is None:
-                return None
-            values = ElectricityTypeData.from_raw(value)
-            return getattr(values, self.entity_description.subkey)
-
-        # Valid string or enum value
-        return value
+        return self.entity_description.native_value(value)
