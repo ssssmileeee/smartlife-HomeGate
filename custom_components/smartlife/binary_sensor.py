@@ -20,11 +20,6 @@ from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
 from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode
 
-import logging
-
-LOGGER = logging.getLogger(__name__)
-
-
 @dataclass
 class SmartLifeBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes a smartlife binary sensor."""
@@ -387,8 +382,7 @@ async def async_setup_entry(
             if descriptions := BINARY_SENSORS.get(device.category):
                 for description in descriptions:
                     dpcode = description.dpcode or description.key
-                    # Для устройств категории qt добавляем все сенсоры без проверки наличия в status
-                    if device.category == "qt" or dpcode in device.status:
+                    if dpcode in device.status:
                         entities.append(
                             SmartLifeBinarySensorEntity(
                                 device, hass_data.manager, description
@@ -418,19 +412,12 @@ class SmartLifeBinarySensorEntity(SmartLifeEntity, BinarySensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{super().unique_id}{description.key}"
 
-        # Минимальное логирование для ворот
-        if self.device.category == "qt":
-            LOGGER.debug(
-                "Initializing gate binary sensor: %s (key=%s)",
-                description.name,
-                description.key,
-            )
-
-    @property
-    def is_on(self) -> bool | None:
-        """Return true if the binary sensor is on."""
-        value = self.device.status.get(self.entity_description.key)
-        if value is None:
-            return None
-
-        return value == self.entity_description.on_value
+    @@property
+    def is_on(self) -> bool:
+        """Return true if sensor is on."""
+        dpcode = self.entity_description.dpcode or self.entity_description.key
+        if dpcode not in self.device.status:
+            return False
+        if isinstance(self.entity_description.on_value, set):
+            return self.device.status[dpcode] in self.entity_description.on_value
+        return self.device.status[dpcode] == self.entity_description.on_value

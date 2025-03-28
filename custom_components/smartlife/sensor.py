@@ -23,11 +23,6 @@ from homeassistant.const import (
     UnitOfTime,
     UnitOfEnergy,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
-    UnitOfLength,
-    UnitOfPressure,
-    UnitOfVolume,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect

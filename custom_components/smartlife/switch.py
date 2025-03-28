@@ -18,7 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
-from .const import DOMAIN, LOGGER, SMART_LIFE_DISCOVERY_NEW, DPCode
+from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode
 
 # All descriptions can be found here. Mostly the Boolean data types in the
 # default instruction set of each category end up being a Switch.
@@ -727,9 +727,8 @@ async def async_setup_entry(
         for device_id in device_ids:
             device = hass_data.manager.device_map[device_id]
             if descriptions := SWITCHES.get(device.category):
-                for description in descriptions:
-                    # Для устройств категории qt добавляем все переключатели без проверки наличия в status
-                    if device.category == "qt" or description.key in device.status:
+                for description in descriptions:                    
+                    if description.key in device.status:
                         entities.append(
                             SmartLifeSwitchEntity(
                                 device, hass_data.manager, description
