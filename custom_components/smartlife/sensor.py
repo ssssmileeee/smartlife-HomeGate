@@ -44,7 +44,6 @@ from .const import (
     DPCode,
     DPType,
     UnitOfMeasurement,
-    debug_dp_code,
 )
 
 

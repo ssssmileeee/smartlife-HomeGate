@@ -18,7 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
-from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode, debug_dp_code
+from .const import DOMAIN, SMART_LIFE_DISCOVERY_NEW, DPCode
 
 import logging
 

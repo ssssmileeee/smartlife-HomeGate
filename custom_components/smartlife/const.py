@@ -391,19 +391,6 @@ class UnitOfMeasurement:
     conversion_fn: Callable[[float], float] | None = None
 
 
-def debug_dp_code(dp_code: DPCode) -> str:
-    """Return debug information for a DPCode."""
-    if not dp_code:
-        return "None"
-    
-    try:
-        if hasattr(dp_code, "value"):
-            return f"{dp_code} ({dp_code.value})"
-        return str(dp_code)
-    except Exception as e:
-        return f"Error: {e}"
-
-
 # A tuple of available units of measurements we can work with.
 # SmartLife's devices aren't consistent in UOM use, thus this provides
 # a list of aliases for units and possible conversions we can do

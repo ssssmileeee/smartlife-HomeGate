@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HomeAssistantSmartLifeData
 from .base import SmartLifeEntity
-from .const import DOMAIN, LOGGER, SMART_LIFE_DISCOVERY_NEW, DPCode, debug_dp_code
+from .const import DOMAIN, LOGGER, SMART_LIFE_DISCOVERY_NEW, DPCode
 
 # All descriptions can be found here.
 # https://developer.tuya.com/en/docs/iot/standarddescription?id=K9i5ql6waswzq

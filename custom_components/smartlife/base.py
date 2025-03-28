@@ -8,12 +8,14 @@ import struct
 from typing import Any, Literal, overload
 
 from tuya_sharing import Manager, CustomerDevice
+from tuya_sharing.device import DeviceStatusRange
+import re
 from typing_extensions import Self
 
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo, Entity
 
-from .const import DOMAIN, LOGGER, SMART_LIFE_HA_SIGNAL_UPDATE_ENTITY, DPCode, DPType, debug_dp_code
+from .const import DOMAIN, LOGGER, SMART_LIFE_HA_SIGNAL_UPDATE_ENTITY, DPCode, DPType
 from .util import remap_value
 
 
